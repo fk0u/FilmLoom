@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FilmLoom</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom Styles -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Roboto', 'sans-serif']
+          },
+          colors: {
+            primary: '#4f46e5',
+            dark: '#1e293b',
+            light: '#f8fafc',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    .carousel {
+        overflow-x: auto;
+        white-space: nowrap;
+        scroll-behavior: smooth;
+      }
+      .carousel-item {
+        display: inline-block;
+        margin-right: 1rem;
+        transition: transform 0.3s ease;
+      }
+      .carousel-item:hover {
+        transform: scale(1.1);
+      }
+      .modal {
+        backdrop-filter: blur(10px);
+        background: rgba(17, 24, 39, 0.9);
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .search-results {
+        max-height: 300px;
+        overflow-y: auto;
+        background: rgba(31, 41, 55, 0.9);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+      }
+      .wishlist-item:hover {
+        background: rgba(75, 85, 99, 0.8);
+      }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: rgba(31, 41, 55, 0.9);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      animation: slideIn 0.5s ease-in-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Loader Spinner */
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s infinite linear;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-300 font-sans">
+    
+    <header class="bg-gray-800 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+          <!-- Logo dan Judul -->
+          <div class="flex items-center space-x-4">
+            <i class="fa-solid fa-film text-primary text-3xl"></i>
+            <h1 class="text-2xl font-bold text-white">FilmLoom</h1>
+          </div>
+          
+          <!-- Search Bar -->
+          <div class="relative w-1/3">
+            <input type="text" id="searchBar" placeholder="Search movies..." class="p-2 rounded-md w-full text-gray-800">
+            <div id="searchResults" class="absolute w-full mt-2 hidden bg-gray-800 p-4 rounded-lg z-50">
+              <!-- Search results dynamically loaded -->
+            </div>
+          </div>
+          
+          <!-- Wishlist & Account -->
+          <div class="flex items-center space-x-6">
+            <!-- Wishlist -->
+            <div class="relative">
+              <button id="wishlistButton" class="text-white text-xl relative">
+                <i class="fa-solid fa-heart"></i>
+              </button>
+              <div id="wishlistModal" class="absolute hidden bg-gray-800 rounded-lg shadow-lg w-64 top-12 right-0 z-50">
+                <div class="p-4">
+                  <h2 class="text-lg font-bold text-white mb-4">My Wishlist</h2>
+                  <div id="wishlistContent" class="space-y-4">
+                    <!-- Wishlist items dynamically loaded -->
+                  </div>
+                  <p id="emptyWishlist" class="text-center text-gray-400 hidden">Your wishlist is empty.</p>
+                </div>
+              </div>
+            </div>
+      
+            <!-- Account -->
+            <div class="relative">
+              <button id="accountButton" class="text-white text-xl relative flex items-center">
+                <i class="fa-solid fa-user"></i>
+                <span id="userName" class="ml-2 text-sm font-medium hidden"></span>
+              </button>
+              <div id="accountModal" class="absolute hidden bg-gray-800 rounded-lg shadow-lg w-96 top-12 right-0 z-50">
+                <div class="p-6">
+                  <h2 id="accountModalTitle" class="text-lg font-bold text-white mb-4">Login</h2>
+                  <form id="loginForm" class="space-y-4">
+                    <input type="text" id="loginEmail" placeholder="Email" class="w-full p-2 rounded-md bg-gray-700 text-white" required />
+                    <input type="password" id="loginPassword" placeholder="Password" class="w-full p-2 rounded-md bg-gray-700 text-white" required />
+                    <button type="submit" class="w-full bg-primary hover:bg-indigo-700 px-4 py-2 rounded text-white">Login</button>
+                    <div class="flex justify-center items-center mt-2">
+                      <button id="loginWithGoogle" type="button" class="flex items-center gap-2 text-white bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">
+                        <i class="fa-brands fa-google text-red-500"></i> Login with Google
+                      </button>
+                    </div>
+                  </form>
+                  <p class="text-center text-gray-400 mt-4">
+                    Don't have an account? <button id="toggleToSignUp" class="text-primary hover:underline">Sign Up</button>
+                  </p>
+                </div>
+                <div id="signUpFormContainer" class="hidden p-6">
+                  <h2 class="text-lg font-bold text-white mb-4">Sign Up</h2>
+                  <form id="signUpForm" class="space-y-4">
+                    <input type="text" id="signUpName" placeholder="Name" class="w-full p-2 rounded-md bg-gray-700 text-white" required />
+                    <input type="email" id="signUpEmail" placeholder="Email" class="w-full p-2 rounded-md bg-gray-700 text-white" required />
+                    <input type="password" id="signUpPassword" placeholder="Password" class="w-full p-2 rounded-md bg-gray-700 text-white" required />
+                    <button type="submit" class="w-full bg-primary hover:bg-indigo-700 px-4 py-2 rounded text-white">Sign Up</button>
+                    <div class="flex justify-center items-center mt-2">
+                      <button id="signUpWithGoogle" type="button" class="flex items-center gap-2 text-white bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">
+                        <i class="fa-brands fa-google text-red-500"></i> Sign Up with Google
+                      </button>
+                    </div>
+                  </form>
+                  <p class="text-center text-gray-400 mt-4">
+                    Already have an account? <button id="toggleToLogin" class="text-primary hover:underline">Login</button>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>      
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Search Loader -->
+  <div id="searchLoader" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="text-center">
+      <div class="spinner"></div>
+      <p class="text-white mt-4">Searching...</p>
+    </div>
+  </div>
+
+  <!-- Trending Movies Section -->
+  <section class="container mx-auto px-4 my-6">
+    <h2 class="text-3xl font-bold text-white mb-4">Trending Movies</h2>
+    <div class="carousel scrollbar-hide" id="trendingMovies">
+      <!-- Trending movies dynamically loaded -->
+    </div>
+  </section>
+
+  <!-- New Releases Section -->
+  <section class="container mx-auto px-4 my-6">
+    <h2 class="text-3xl font-bold text-white mb-4">New Release Films</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6" id="newReleases">
+      <!-- New releases dynamically loaded -->
+    </div>
+    <button id="loadMore" class="mt-6 bg-primary hover:bg-indigo-700 px-4 py-2 rounded text-white mx-auto block">
+      <i class="fa-solid fa-plus"></i> Load More
+    </button>
+  </section>
+
+  <!-- Filter and Search Section -->
+    <section id="filterSection" class="bg-gray-800 py-6">
+        <div class="container mx-auto">
+        <h2 class="text-2xl font-bold text-white text-center mb-4">Filter and Search Movies</h2>
+        <div class="flex flex-wrap gap-4 items-center justify-center">
+            <!-- Search by Keyword -->
+            <input id="keywordSearch" type="text" placeholder="Search by keyword" class="p-2 bg-gray-700 text-white rounded-md w-full md:w-1/4" />
+    
+            <!-- Filter by Genre -->
+            <select id="genreFilter" class="p-2 bg-gray-700 text-white rounded-md w-full md:w-1/6">
+            <option value="">Select Genre</option>
+            </select>
+    
+            <!-- Filter by Country -->
+            <select id="countryFilter" class="p-2 bg-gray-700 text-white rounded-md w-full md:w-1/6">
+            <option value="">Select Country</option>
+            </select>
+    
+            <!-- Filter by Year -->
+            <input id="yearFilter" type="number" placeholder="Year" class="p-2 bg-gray-700 text-white rounded-md w-full md:w-1/6" />
+    
+            <!-- Sort Options -->
+            <select id="sortFilter" class="p-2 bg-gray-700 text-white rounded-md w-full md:w-1/6">
+            <option value="popularity.desc">Sort by Popularity</option>
+            <option value="vote_average.desc">Sort by Rating</option>
+            <option value="release_date.desc">Sort by Release Date</option>
+            </select>
+    
+            <!-- Search Button -->
+            <button id="applyFilters" class="bg-primary px-4 py-2 rounded-md text-white w-full md:w-1/6">
+            Search
+            </button>
+    
+            <!-- Reset Filters Button -->
+            <button id="resetFilters" class="bg-gray-600 px-4 py-2 rounded-md text-white w-full md:w-1/6">
+            Reset Filters
+            </button>
+        </div>
+        </div>
+    </section>
+  
+    <!-- Results Section -->
+    <section id="resultsSection" class="bg-gray-900 py-6 hidden">
+        <div class="container mx-auto">
+          <h2 class="text-2xl font-bold text-white text-center mb-4">Search Results</h2>
+          <!-- Loader -->
+          <div id="loader" class="text-center hidden">
+            <div class="spinner border-t-4 border-b-4 border-primary w-16 h-16 rounded-full animate-spin mx-auto"></div>
+            <p class="text-white mt-4">Loading...</p>
+          </div>
+          <!-- Results Container -->
+          <div id="resultsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- Results will be dynamically added here -->
+          </div>
+        </div>
+      </section>
+      
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-center py-6">
+    <p class="text-gray-500">&copy; 2024 FilmLoom. All rights reserved.</p>
+  </footer>
+
+  <!-- JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
